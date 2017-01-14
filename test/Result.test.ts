@@ -27,6 +27,7 @@ describe('Result', () => {
                     return "A String Now!"
                 });
 
+            //noinspection JSUnusedLocalSymbols
             function something(a: Result<string, Error>) {
                 done();
             }
@@ -37,7 +38,7 @@ describe('Result', () => {
         it('supports Returning Results inside then', (done) => {
             const expectedValue: {a: number} = {a: 1};
 
-            const myResult = Result.success<{a: number}, Error>(expectedValue)
+            Result.success<{a: number}, Error>(expectedValue)
                 .then((value: {a: number}) => {
                     expect(value).to.equal(expectedValue);
                     return Result.success<String, Error>("A String Now!");
@@ -73,9 +74,10 @@ describe('Result', () => {
         it('Resolves failures in catch', (done) => {
             const expectedValue: Error = new Error('hello Message');
 
-            Result.failure(expectedValue)
+            Result.failure<string, Error>(expectedValue)
                 .then(() => {
                     expect.fail("Should not resolve");
+                    return "";
                 })
                 .catch((err) => {
                     return err.message;
@@ -92,15 +94,23 @@ describe('Result', () => {
             Result.failure(expectedValue)
                 .then(() => {
                     expect.fail("Should not resolve");
+                    return "";
                 })
-                .catch((err) => {
-                    return Result.failure(new Error('New Message'));
+                .catch(() => {
+                    return Result.failure<string, Error>(new Error('New Message'));
                 })
                 .then(expect.fail)
                 .catch((err) => {
                     expect(err.message).to.equal('New Message');
                     done();
                 });
+        });
+
+        it('ignores catch if result is not a failure', () => {
+            Result.success("soo Great")
+                .catch(() => {
+                    throw new Error("Should Not Have Been Called")
+                }).then((value) => expect(value).to.equal("soo Great"));
         });
     });
 });
